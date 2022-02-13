@@ -1,0 +1,47 @@
+server:
+  port: 8999
+
+eureka:
+  instance:
+    hostname: localhost
+
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/customers/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: customer-service
+                fallbackuri: forward:/customerServiceFallback
+
+        - id: account-service
+          uri: lb://account-service
+          predicates:
+            - Path=/account/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: account-service
+                fallbackuri: forward:/accountServiceFallback
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMillieseconds: 5000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
